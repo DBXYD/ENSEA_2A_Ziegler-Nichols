@@ -227,4 +227,5 @@ Ce TP a permis de mettre en œuvre un asservissement numérique de vitesse d’u
 
 
 ## Source
-[Digital Controller Tuning - Siemens](https://cache.industry.siemens.com/dl/files/379/51436379/att_93068/v1/AD353-119r2.pdf)
+* [Digital Controller Tuning - Siemens](https://cache.industry.siemens.com/dl/files/379/51436379/att_93068/v1/AD353-119r2.pdf)
+* [text](http://tom.poub.free.fr/blog/XUFO/Docs/correction6.pdf)
