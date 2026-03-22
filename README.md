@@ -199,8 +199,12 @@ Brancher également la sonde tachymétrique sur un voltmètre de table pour avoi
 ---
 
 # 10. Méthode de réglage : Ziegler–Nichols
-
 Dans ce TP on utilise la méthode expérimentale dite de l’oscillation critique.
+
+Les paramètres à respecter :
+* $V_{supply} = 24V$, tension d'alimentation à paramétrer sur l'alimentation de laboratoire
+* $\Omega_{cible} = 750tour/min$
+* $I_{max} = 10A$, courant maximum autorisé en sortie du hacheur, la commande aux bornes du moteur sera automatiquement coupée en de dépassement
 
 ## Etape 2 : Faire tourner le moteur avec un rapport cyclique de 0.75, V=Vmax/2=24V
 Configurer le hacheur avec les paramètres souhaitez.
@@ -208,7 +212,7 @@ Configurer le hacheur avec les paramètres souhaitez.
 En boucle ouverte, mesurer le point de fonctionnement du moteur. Nous allons faire des mesures à un point de fonctionnement spécifique afin de ne pas subir les frottements secs présent lors du démarrage et être loin de la vitesse maximale afin de préserver le moteur et le hacheur.
 **Mesurer l'erreur de la tachymétrique à partir de la valeur mesurer de l'encodeur :**
 * L'encodeur numérique est beaucoup plus précis que le capteur tachémétrique. Mesure l'erreur que nous considérerons proportionnel à la vitesse afin d'avoir une idée précis de la vitesse.
-* Modéliser le moteur à partir d'essai en court-circuit et le courant mesuré à partir des capteur de courant du hacheur
+* Modéliser le moteur à partir d'essai en court-circuit et le courant mesuré à partir des capteurs de courant du hacheur
 
 ## Étape 2 : Utiliser un correcteur proportionnel
 Nous allons utiliser un correcteur proportionnel pur. 
@@ -234,8 +238,8 @@ Les paramètres du PID sont donnés par :
 | Correction  | P           | PI              | PID             |
 |-------------|-------------|-----------------|-----------------|
 | $K_p$       | $0.5 K_u$   | $0.45 K_u$      | $0.6 K_u$       |
-| $T_i$       |             | $0.83 T_u$      | $0.5 T_u$       |
-| $T_d$       |             |                 | $0.125 T_u$     |
+| $T_i$       | -           | $0.83 T_u$      | $0.5 T_u$       |
+| $T_d$       | -           | -               | $0.125 T_u$     |
 
 Calculer les paramètres dans les 3 cas d'asservissement puis les transposer au filtre numérique en calculant les coefficients $a_k$ et $b_k$.
 
@@ -261,7 +265,7 @@ Refaire l'exercice en modifiant la fréquence d'échantillonnage.
 
 # Sources
 * [Digital Controller Tuning - Siemens](https://cache.industry.siemens.com/dl/files/379/51436379/att_93068/v1/AD353-119r2.pdf)
-* [text](http://tom.poub.free.fr/blog/XUFO/Docs/correction6.pdf)
+* [Correction Asservissement](http://tom.poub.free.fr/blog/XUFO/Docs/correction6.pdf)
 
 <!-- # Code
 ```Python
