@@ -85,12 +85,16 @@ Cette erreur sera traitée par un correcteur PID qui calcule la commande appliqu
 
 Le correcteur PID continu s’écrit :
 
-$$u(t) = K_p \epsilon(t) + K_i \int \epsilon(t)  + K_d \frac{d\epsilon(t)}{dt}$$
+$$u(t) = K_p (\epsilon(t) + \frac{1}{T_i} \int \epsilon(t) + T_d \frac{d\epsilon(t)}{dt})$$
 
 avec :
 * $K_p$ : gain proportionnel
-* $K_i$ : gain intégral
-* $K_d$ : gain dérivé
+* $T_i$ : constante de temps intégrateur
+* $K_d$ : constante de temps dérivateur
+
+Soit un correcteur de la forme : 
+
+$$C(p) = K_p(1 + T_d p + \frac{1}{T_i p})$$
 
 Rôle des actions :
 * Action proportionnelle : rapidité
@@ -120,8 +124,8 @@ Le résultat sera mise sous la forme canonique à ce que la fonction de transfer
 
 $$ H(z) = \frac{\sum_0^{N-1} b_k z^{-k}}{1 + \sum_0^{M-1} a_k z^{-k}} $$
 
-**Déterminer : Les coefficients $a_k$ et $b_k$ en fonction de $K_p$, $K_i$, $K_d$ et $Te$**
-**Ecriver un script dans le langage de votre choix qui calculera très rapidement les coefficients en fonction des paramètres, vous aurez besoin à plusieures reprises de calculer les $a_k$, $b_k$**
+**Déterminer : Les coefficients $a_k$ et $b_k$ en fonction de $K_p$, $T_i$, $T_d$ et $T_e$**
+**Ecriver un script dans le langage de votre choix qui calculera très rapidement les coefficients en fonction des paramètres, vous aurez besoin à plusieures reprises de (re-)calculer les $a_k$, $b_k$**
 
 
 
@@ -137,32 +141,55 @@ Toutes les fonctions commençant par *get* récupèrent une valeur.
 
 Il faut se référer à l'aide suivante :
 
-| Fonction          | Description                             | Arguments                                     |
-|-------------------|-----------------------------------------|-----------------------------------------------|
-| setLed            | Allume la led RGB                       | setLED <uint8 R> <uint8 G> <uint8 B>          | 
-| setDuty           | Règle le rapport cyclique à $\alpha$    | setDuty cycle <$\alpha$>, $0 < \alpha < 1$    |
-| setMotorOn        | | |
-| setMotorOff       | | |
-| setLoopOpen       | | |
-| setLoopClose      | | |
-| setCoeff          | | |
-
-**LISTE DES FONCTIONS A COMPLETER**
+| Fonction          | Description                               | Arguments                                         |
+|-------------------|-------------------------------------------|---------------------------------------------------|
+| setLed            | Allume la led RGB                         | setLED <uint8 R> <uint8 G> <uint8 B>              | 
+| setDuty           | Règle le rapport cyclique à $\alpha$ (en boucle ouverte uniquement)     | setDuty cycle <$\alpha$>, $0 < \alpha < 1$        |
+| setSpeedTarget    | Définit la vitesse cible du moteur (en boucle fermée uniquement)       | setSpeedTarget <float speed> (en tr/min ou rad/s) |
+| setSupplyVoltage  | Définit la tension d'alimentation         | setSupplyVoltage <float voltage> (en V)           |
+| setMotorOn        | Démarre le moteur (active les PWM)                         | setMotorOn                                        |
+| setMotorOff       | Arrête le moteur (desactive les PWM)          | setMotorOff                                       |
+| setLoopOpen       | Active la commande en boucle ouverte          | setLoopOpen                                       |
+| setLoopClose      | Active la commande en boucle fermée (PID)     | setLoopClose                                      |
+| setCoeffb0        | Définit le coefficient b0 d'un IRR d'ordre 2  | setCoeffb0 <float b0>                             |
+| setCoeffb1        | Définit le coefficient b1 d'un IRR d'ordre 2  | setCoeffb1 <float b1>                             |
+| setCoeffb2        | Définit le coefficient b2 d'un IRR d'ordre 2  | setCoeffb2 <float b2>                             |
+| setCoeffa1        | Définit le coefficient a1 d'un IRR d'ordre 2  | setCoeffa1 <float a1>                             |
+| setCoeffa2        | Définit le coefficient a2 d'un IRR d'ordre 2  | setCoeffa2 <float a2>                             |
+| getState          | Renvoie toutes les informations               | getStage                                          |
 
 ---
 
 # 9. Cablage de la maquette
 
-A compléter
+![Cablage maquette](image.png)
 
-Demander à afficher à l'oscilloscope
-* Sonde numérique
-  * Voies 1, 2 : Encodeur numérique,
-  * Voies 3, 4, 5 et 6 : PWM générées,
-* Entrée analogiques :
-  * Voie 1 : Mesure de tension aux bornes du moteur à travers les sondes différentielles,
-  * Voie 2 : Mesure de la vitesse du moteur à l'aide de la sonde tachymétrique,
-  * Voie 3 : Mesure du courant du canal *U* à l'aide d'une sonde grip-fils sur la maquette,
+Description de la carte :
+
+| Élément | Description |
+|--------|-------------|
+| Connecteur d'alimentation | $V_{min} = 18V$, $V_{max} = 74V$ |
+| Bouton de reset | Permet de redémarrer le microcontrôleur |
+| Boutons (1, 2, 3) | Pas d'action actuellement |
+| Led Neopixel | Vert : tension d'alimentation OK / Rouge : tension trop élevée |
+| Connecteur 10 pins | Connexion à la carte encodeur pour mesurer la vitesse du moteur (indispensable en boucle fermée) |
+| Interrupteur étage de puissance | Cablé sur une porte logique ET avec les signaux PWM et drivers MOSFET |
+| Connecteur sonde numérique | Canal 1-2 : encodeur / Canal 3-6 : commandes MOSFET U, V / Canal 7-8 : commandes MOSFET W (non utilisés) |
+| Mesure courant | $V_I = 2.5V + 0.05 I$, filtrage passe-bas à 16kHz |
+| Mesure tension | $V_V = 0.053 V_{Half-Bridge}$, filtrage passe-bas à 160Hz |
+| LED témoins PWM | Cablés directement sur les signaux du micro-contrôleur |
+| Sorties de puissance | Connecteur U, V, W (seuls U et V utilisés dans ce TP) |
+
+
+Demander à afficher à l'oscilloscope :
+
+| Signal | Description |
+|--------|-------------|
+| Sonde numérique - Voies 1, 2 | Encodeur numérique |
+| Sonde numérique - Voies 3, 4, 5, 6 | PWM générées |
+| Entrée analogique - Voie 1 | Mesure de tension aux bornes du moteur (sondes différentielles) |
+| Entrée analogique - Voie 2 | Mesure de la vitesse du moteur (sonde tachymétrique) |
+| Entrée analogique - Voie 3 | Mesure du courant du canal U (sonde grip-fils) |
 
 Brancher également la sonde tachymétrique sur un voltmètre de table pour avoir une vue constante sur la vitesse de rotation de la machine.
 
@@ -175,84 +202,78 @@ Brancher également la sonde tachymétrique sur un voltmètre de table pour avoi
 
 Dans ce TP on utilise la méthode expérimentale dite de l’oscillation critique.
 
-## Étape 1 : Utiliser un correcteur proportionnel
-Configurer le PID avec les paramètres suivants 
-* $K_d = 0$, la valeur changera au cours du temps
-* $K_i = 0$, la valeur reste nulle dans cette partie
-* $K_d = 0$, la valeur reste nulle dans cette partie
-
-Le correcteur devient un correcteur proportionnel.
-
----
-
 ## Etape 2 : Faire tourner le moteur avec un rapport cyclique de 0.75, V=Vmax/2=24V
+Configurer le hacheur avec les paramètres souhaitez.
+
 En boucle ouverte, mesurer le point de fonctionnement du moteur. Nous allons faire des mesures à un point de fonctionnement spécifique afin de ne pas subir les frottements secs présent lors du démarrage et être loin de la vitesse maximale afin de préserver le moteur et le hacheur.
-**Mesurer l'erreur de la tachymétrique à partir de la valeur mesurer de l'encodeur**
-**Mesurer les frottements 
+**Mesurer l'erreur de la tachymétrique à partir de la valeur mesurer de l'encodeur :**
+* L'encodeur numérique est beaucoup plus précis que le capteur tachémétrique. Mesure l'erreur que nous considérerons proportionnel à la vitesse afin d'avoir une idée précis de la vitesse.
+* Modéliser le moteur à partir d'essai en court-circuit et le courant mesuré à partir des capteur de courant du hacheur
+
+## Étape 2 : Utiliser un correcteur proportionnel
+Nous allons utiliser un correcteur proportionnel pur. 
+Activer la boucle de retour.
+
+Configurer le PID afin d'avoir un correcteur proportionnel pur.
+* $K_d = A DETERMINER$, la valeur changera au cours du temps
+
+Faîtes tourner le moteur en lui demander une vitesse de rotation cible.
 
 ## Étape 3 : Mise en oscillations permanentes
-Réitéré plusieures fois les mesures en augmentant progressivement le gain $K_p$. Augmenter progressivement Kp jusqu’à obtenir des oscillations quasi-permanentes. Couper les envoies de PWM avec l'interrupteur prévu à cette effet en cas d'emballement.
+Augmenter progressivement Kp jusqu’à obtenir des oscillations quasi-permanentes. Couper les envoies de PWM avec l'interrupteur prévu à cette effet en cas d'emballement.
 
-On mesure :
-* $K_u$ : gain critique
+Sur l'oscilloscope, mesurer :
 * $T_u$ : période des oscillations
 
+Noter le gain : 
+* $K_u$ : gain critique
 ---
 
 # 11. Calcul des paramètres PID
-
 Les paramètres du PID sont donnés par :
-* $K_p = 0.6 K_u$
-* $K_i = 2K_p / T_u$
-* $K_d = K_p T_u / 8$
+| Correction  | P           | PI              | PID             |
+|-------------|-------------|-----------------|-----------------|
+| $K_p$       | $0.5 K_u$   | $0.45 K_u$      | $0.6 K_u$       |
+| $T_i$       |             | $0.83 T_u$      | $0.5 T_u$       |
+| $T_d$       |             |                 | $0.125 T_u$     |
 
-# 12. Transformation du PID analogique au PID numérique
-
-
----
+Calculer les paramètres dans les 3 cas d'asservissement puis les transposer au filtre numérique en calculant les coefficients $a_k$ et $b_k$.
 
 # 12. Manipulation expérimentale
-1. Charger le programme sur le STM32
-2. Observer la vitesse moteur
-3. Appliquer une consigne de vitesse
-4. Augmenter progressivement Kp
-5. Identifier les oscillations permanentes
-6. Mesurer la période Tu
-7. Calculer les paramètres PID
-8. Implémenter les valeurs dans le programme
-9. Observer la réponse du système
+Faites les 3 tests en boucle fermée avec les coefficients précédemment calculés.
+1. temps de montée
+1. dépassement
+1. erreur statique
+1. stabilité
 
----
-
-# 13. Analyse des performances
-
-Pour chaque réglage, relever :
-
-* temps de montée
-* dépassement
-* erreur statique
-* stabilité
-
-Tracer la réponse pour :
-* Correcteur P
-* Correcteur PI
-* Correcteur PID
-
----
-
-# 14. Questions
+Questions : 
 1. Quel est l’effet de l’augmentation du gain proportionnel ?
 2. Pourquoi l’action intégrale permet-elle de supprimer l’erreur statique ?
 3. Quel est l’effet de l’action dérivée sur la stabilité ?
 4. Quels sont les inconvénients de la méthode de Ziegler–Nichols ?
 5. Comment le choix de la période d’échantillonnage influence-t-il les performances du correcteur ?
 
----
+# 13. Effet de la fréquence d'échantillonnage
+Refaire l'exercice en modifiant la fréquence d'échantillonnage.
 
-# 15. Conclusion
-Ce TP a permis de mettre en œuvre un asservissement numérique de vitesse d’une machine à courant continu. L’utilisation d’un microcontrôleur STM32 permet de réaliser facilement un correcteur PID numérique. La méthode de Ziegler–Nichols fournit un premier réglage qui peut ensuite être affiné expérimentalement afin d’améliorer les performances du système.
+* Quel est l'impact du changement de la fréquence d'échantillonnage ? 
+* Comparer la réponse mesurée à la théorie.
 
-
-## Source
+# Sources
 * [Digital Controller Tuning - Siemens](https://cache.industry.siemens.com/dl/files/379/51436379/att_93068/v1/AD353-119r2.pdf)
 * [text](http://tom.poub.free.fr/blog/XUFO/Docs/correction6.pdf)
+
+<!-- # Code
+```Python
+Kp = 0 
+Td = 0
+Ti = 0
+Te = 0
+
+b0 = Kp*(1+2*Td/Te+Te/(2*Ti))
+b1 = Kp*(-4*Td/Te+Te/Ti)
+b2 = Kp*(-1+2*Td/Te+Te/(2*Ti))
+a0 = 1
+a1 = 0
+a2 = -1
+``` -->
