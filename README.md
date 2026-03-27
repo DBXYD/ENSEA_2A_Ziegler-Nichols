@@ -8,11 +8,11 @@ Les objectifs sont :
 
 * Analyser une maquette réelle de commande numérique et l'architecture associée
 * Comprendre la structure d’une boucle d’asservissement
-* Régler expérimentalement un correcteur par la méthode de Ziegler–Nichols
+* Calculer à partir de mesures expérimentales un correcteur par la méthode de Ziegler–Nichols
+* Calculer le passage du PID continu au PID discret
 * Implémenter un correcteur PID numérique
-* Comprendre le passage du PID continu au PID discret
 * Analyser les performances d’un asservissement
-* Analyser l'influence de la période d'échantillonnage sur un asservissement numérique
+<!-- * Analyser l'influence de la période d'échantillonnage sur un asservissement numérique -->
   
 ---
 
@@ -39,11 +39,44 @@ Schéma fonctionnel :
 
 ![schema](schema_objectif.png)
 
-Pour information, l'ensemble du hardware et du software sont disponibles [ici](https://github.com/DBXYD/Inverter_SQJQ910EL)
+L'ensemble du hardware et du software sont disponibles [ici](https://github.com/DBXYD/Inverter_SQJQ910EL)
+
+> 🧠 **Partie théorique**
+>
+> Analyser la carte dans son ensemble, les différents éléments électroniques du schéma :
+>  - Puissances maximales acceptées
+>  - Quel est le rôle du PCB inférieur ?
+>  - A quoi servent les composants suivants : 
+>     - MAX3097
+>     - SN74LVC2GDB
+>     - MIC4605-1YM
+>     - SQJQ910EL
+>     - GO 10-SME/SP3
+>     - BAT54S
+>     - WE 824032813
+>     - Connecteur J109
+>     - WE 173951275
+>     - WE 171013801
+>     - AZ1117-3.3
+> - Combien d'alimentation sont nécessaires ? Quel(s) est/sont les avantages et inconvénient ?
+> 
+> Analyser le software proposer, vous ne devez rien changer au code durant l'ensemble du TP mais vous aurez la nécessité de flasher le STM32 et lancer au mode débug pour accéder à valeurs internes
+>  - A quoi servent les fichiers suivants : 
+>     - app.c/.h
+>     - state.c/.h
+>     - acquisition/analog.c/.h
+>     - acquisition/encodeur.c/.h
+>     - control/control.c/.h
+>     - control/motor.c/.h
+>     - user_interface/button.c/.h
+>     - user_interface/neopixel.c/.h
+>     - user_interface/shell.c/.h
+>
+> A votre avis comment allez-vous configurer votre PID ? Faire tourner votre moteur ? etc...
 
 ---
 
-# 3. Modélisation de la machine à courant continu
+# 3. Rappels : Modélisation de la machine à courant continu
 
 Le modèle classique d'une MCC est décrit par les équations suivantes.
 
@@ -65,7 +98,7 @@ avec :
 * $f$ : coefficient de frottement
 * $\Omega$ : vitesse de rotation
 
-Dans ce TP on ne réalise pas l’identification complète du moteur. On se place dans une approche expérimentale de réglage du correcteur.
+Dans ce TP **on ne réalise pas l’identification du moteur**. On se place dans une approche expérimentale de réglage du correcteur.
 
 ---
 
@@ -90,7 +123,7 @@ $$u(t) = K_p (\epsilon(t) + \frac{1}{T_i} \int \epsilon(t) + T_d \frac{d\epsilon
 avec :
 * $K_p$ : gain proportionnel
 * $T_i$ : constante de temps intégrateur
-* $K_d$ : constante de temps dérivateur
+* $T_d$ : constante de temps dérivateur
 
 Soit un correcteur de la forme : 
 
@@ -124,8 +157,13 @@ Le résultat sera mise sous la forme canonique à ce que la fonction de transfer
 
 $$ H(z) = \frac{\sum_0^{N-1} b_k z^{-k}}{1 + \sum_0^{M-1} a_k z^{-k}} $$
 
-**Déterminer : Les coefficients $a_k$ et $b_k$ en fonction de $K_p$, $T_i$, $T_d$ et $T_e$**
-**Ecriver un script dans le langage de votre choix qui calculera très rapidement les coefficients en fonction des paramètres, vous aurez besoin à plusieures reprises de (re-)calculer les $a_k$, $b_k$**
+
+> 🧠 **Partie théorique**
+> 
+> Déterminer : Les coefficients $a_k$ et $b_k$ en fonction de $K_p$, $T_i$, $T_d$ et $T_e$
+
+> 💻 **Partie pratique** 
+> Ecriver un script dans le langage de votre choix qui calculera très rapidement les coefficients en fonction des paramètres, vous aurez besoin à plusieures reprises de (re-)calculer les $a_k$, $b_k$
 
 
 
@@ -141,9 +179,21 @@ Toutes les fonctions commençant par *get* récupèrent une valeur.
 
 Il faut se référer à l'aide suivante :
 
+
 | Fonction          | Description                               | Arguments                                         |
 |-------------------|-------------------------------------------|---------------------------------------------------|
-| setLed            | Allume la led RGB                         | setLED <uint8 R> <uint8 G> <uint8 B>              | 
+| help                      | Afficher l'aide                     | `help`  |
+| setLed                    | Change le couleur de la LED        | `setLed <uint8 R> <uint8 G> <uint8 B>` |
+| getSpeed                  | Get instant speed                   | `getSpeed` |
+| setControlMode            | Change open/close loop              | `setControlMode open/close` |
+| setControlCoeff           | set a1, a2, b0, b1 and b2 coeff     | `setControlCoeff b0 <float>` |
+| setControlResetCoeff      | reset a1, a2, b0, b1 and b2 coeff   | `setControlResetCoeff` |
+| setControlPwmEnable       | Active les PWM en sortie                        | `setControlPwmEnable` |
+| setControlPwmDisable      | Désactive les PWM en sortie                      | `setControlPwmDisable` |
+| setControlTarget          | Définit la vitesse cible   | `setControlTarget <float>` |
+---
+
+<!-- | setLed            | Allume la led RGB                         | setLED <uint8 R> <uint8 G> <uint8 B>              | 
 | setDuty           | Règle le rapport cyclique à $\alpha$ (en boucle ouverte uniquement)     | setDuty cycle <$\alpha$>, $0 < \alpha < 1$        |
 | setSpeedTarget    | Définit la vitesse cible du moteur (en boucle fermée uniquement)       | setSpeedTarget <float speed> (en tr/min ou rad/s) |
 | setSupplyVoltage  | Définit la tension d'alimentation         | setSupplyVoltage <float voltage> (en V)           |
@@ -156,9 +206,7 @@ Il faut se référer à l'aide suivante :
 | setCoeffb2        | Définit le coefficient b2 d'un IRR d'ordre 2  | setCoeffb2 <float b2>                             |
 | setCoeffa1        | Définit le coefficient a1 d'un IRR d'ordre 2  | setCoeffa1 <float a1>                             |
 | setCoeffa2        | Définit le coefficient a2 d'un IRR d'ordre 2  | setCoeffa2 <float a2>                             |
-| getState          | Renvoie toutes les informations               | getStage                                          |
-
----
+| getState          | Renvoie toutes les informations               | getStage                                          | -->
 
 # 9. Cablage de la maquette
 
@@ -180,8 +228,17 @@ Description de la carte :
 | LED témoins PWM | Cablés directement sur les signaux du micro-contrôleur |
 | Sorties de puissance | Connecteur U, V, W (seuls U et V utilisés dans ce TP) |
 
+> 🔧 **Checkpoint montage**
+> 
+> Brancher l'ensemble des connecteurs sur la maquette :
+> - Connecteur d'alimentation sur une alimentation de laboratoire QPX1200, configurer l'alimentation pour délivrer 24V et 5A max
+> - Connecteur pour l'étage de sortie sur le moteur MCC, n'utiliser que les cables noir (-) et gris (+)
+> - Connecteur de l'encodeur à brancher sur le moteur (nappe 10 fils)
+> - Connecteur de la sonde ST-Link à brancher sur le PC (avec STM32CubeIDE)
 
-Demander à afficher à l'oscilloscope :
+> 🛑 **Validation enseignant**
+> 
+> 👉 Faire valider ton montage avant de passer à la suite.
 
 | Signal | Description |
 |--------|-------------|
@@ -191,10 +248,24 @@ Demander à afficher à l'oscilloscope :
 | Entrée analogique - Voie 2 | Mesure de la vitesse du moteur (sonde tachymétrique) |
 | Entrée analogique - Voie 3 | Mesure du courant du canal U (sonde grip-fils) |
 
-Brancher également la sonde tachymétrique sur un voltmètre de table pour avoir une vue constante sur la vitesse de rotation de la machine.
+> 🛠️ **Partie pratique**
+> 
+> Afficher sur l'oscilloscope les signaux décrits précédemment.
 
-**Régler les unités et les gains afin de lire directement toutes les valeurs sur l'oscilloscope**
-**Régler le trigger dans un premier temps sur la voie 3 numérique**
+> 🔧 **Checkpoint montage**
+> 
+> - Brancher également la sonde tachymétrique sur un voltmètre de table pour avoir une vue constante sur la vitesse de rotation de la machine.
+> - Régler les unités et les gains afin de lire directement toutes les valeurs sur l'oscilloscope
+> - Régler le trigger dans un premier temps sur la voie 3 numérique**
+
+> 🛠️ **Partie pratique**
+> 
+> - Placer l'interrupteur de la carte sur off (vers le haut),
+> - Flasher la carte, et depuis l'interface uart, générer des PWM.
+
+> 🛑 **Validation enseignant**
+> 
+> 👉 Faire valider les signaux par l'enseignant et faites tourner le moteur pour la première fois sous supervision de l'enseignant.
 
 ---
 
@@ -206,31 +277,41 @@ Les paramètres à respecter :
 * $\Omega_{cible} = 750tour/min$
 * $I_{max} = 10A$, courant maximum autorisé en sortie du hacheur, la commande aux bornes du moteur sera automatiquement coupée en de dépassement
 
-## Etape 2 : Faire tourner le moteur avec un rapport cyclique de 0.75, V=Vmax/2=24V
-Configurer le hacheur avec les paramètres souhaitez.
+> 🧠 **Partie théorique**
+> 
+> Quel courant maximum peut être envoyé en instantané dans le moteur ?
+> Quel courant maximum peut être envoyé en continu dans le moteur ?
+> Quel courant maximum peut accepter le moteur ?
 
-En boucle ouverte, mesurer le point de fonctionnement du moteur. Nous allons faire des mesures à un point de fonctionnement spécifique afin de ne pas subir les frottements secs présent lors du démarrage et être loin de la vitesse maximale afin de préserver le moteur et le hacheur.
-**Mesurer l'erreur de la tachymétrique à partir de la valeur mesurer de l'encodeur :**
-* L'encodeur numérique est beaucoup plus précis que le capteur tachémétrique. Mesure l'erreur que nous considérerons proportionnel à la vitesse afin d'avoir une idée précis de la vitesse.
-* Modéliser le moteur à partir d'essai en court-circuit et le courant mesuré à partir des capteurs de courant du hacheur
+## Etape 2 : Faire tourner le moteur avec un rapport cyclique de 0.75, Vcc=Vmax/2=24V
+> 🛠️ **Partie pratique**
+> 
+> - Configurer le hacheur avec les paramètres souhaitez.
+> - En boucle ouverte, mesurer le point de fonctionnement du moteur. 
+
+Remarque : Nous allons faire des mesures à un point de fonctionnement spécifique afin de ne pas subir les frottements secs présents lors du démarrage et être loin de la vitesse maximale afin de préserver le moteur et le hacheur.
+
+> 🛠️ **Partie pratique**
+> Mesurer l'erreur de la tachymétrique à partir de la valeur mesurer de l'encodeur :
+> - L'encodeur numérique est beaucoup plus précis que le capteur tachémétrique. Mesure l'erreur que nous considérerons proportionnel à la vitesse afin d'avoir une idée précis de la vitesse.
 
 ## Étape 2 : Utiliser un correcteur proportionnel
 Nous allons utiliser un correcteur proportionnel pur. 
-Activer la boucle de retour.
-
-Configurer le PID afin d'avoir un correcteur proportionnel pur.
-* $K_d = A DETERMINER$, la valeur changera au cours du temps
-
-Faîtes tourner le moteur en lui demander une vitesse de rotation cible.
+> 🛠️ **Partie pratique**
+> 
+> - Activer la boucle de retour.
+> - Configurer le PID afin d'avoir un correcteur proportionnel pur en commençant par $K_d = 1$, la valeur changera au cours du temps
+> - Faîtes tourner le moteur en lui demander une vitesse de rotation cible.
+> - Commenter
 
 ## Étape 3 : Mise en oscillations permanentes
-Augmenter progressivement Kp jusqu’à obtenir des oscillations quasi-permanentes. Couper les envoies de PWM avec l'interrupteur prévu à cette effet en cas d'emballement.
-
-Sur l'oscilloscope, mesurer :
-* $T_u$ : période des oscillations
-
-Noter le gain : 
-* $K_u$ : gain critique
+> 🛠️ **Partie pratique**
+> 
+> - Augmenter progressivement Kp jusqu’à obtenir des oscillations quasi-permanentes.
+> - Couper les envoies de PWM avec l'interrupteur prévu à cette effet en cas d'emballement.
+> - Sur l'oscilloscope, mesurer :
+>   - $T_u$ : période des oscillations
+>  - Noter le gain $K_u$ : gain critique
 ---
 
 # 11. Calcul des paramètres PID
@@ -241,27 +322,34 @@ Les paramètres du PID sont donnés par :
 | $T_i$       | -           | $0.83 T_u$      | $0.5 T_u$       |
 | $T_d$       | -           | -               | $0.125 T_u$     |
 
-Calculer les paramètres dans les 3 cas d'asservissement puis les transposer au filtre numérique en calculant les coefficients $a_k$ et $b_k$.
+> 🧠 **Partie théorique**
+>
+> Par analyser du code, déterminer la fréquence $F_e$ à laquelle l'asservissement est réalisé.
+> 
+> Calculer les paramètres dans les 3 cas d'asservissement puis les transposer au filtre numérique en calculant les coefficients $a_k$ et $b_k$. C'est le moment de réutiliser le script écris précédemment.
 
 # 12. Manipulation expérimentale
-Faites les 3 tests en boucle fermée avec les coefficients précédemment calculés.
-1. temps de montée
-1. dépassement
-1. erreur statique
-1. stabilité
+> 🛠️ **Partie pratique**
+> 
+> - Faire les 3 tests en boucle fermée avec les coefficients précédemment calculés.
+> 1. temps de montée
+> 1. dépassement
+> 1. erreur statique
+> 1. stabilité
 
-Questions : 
-1. Quel est l’effet de l’augmentation du gain proportionnel ?
-2. Pourquoi l’action intégrale permet-elle de supprimer l’erreur statique ?
-3. Quel est l’effet de l’action dérivée sur la stabilité ?
-4. Quels sont les inconvénients de la méthode de Ziegler–Nichols ?
-5. Comment le choix de la période d’échantillonnage influence-t-il les performances du correcteur ?
+> 🧠 **Questions**
+>
+> 1. Quel est l’effet de l’augmentation du gain proportionnel ?
+> 2. Pourquoi l’action intégrale permet-elle de supprimer l’erreur statique ?
+> 3. Quel est l’effet de l’action dérivée sur la stabilité ?
+> 4. Quels sont les inconvénients de la méthode de Ziegler–Nichols ?
+<!-- > 5. Comment le choix de la période d’échantillonnage influence-t-il les performances du correcteur ? -->
 
-# 13. Effet de la fréquence d'échantillonnage
+<!-- # 13. Effet de la fréquence d'échantillonnage
 Refaire l'exercice en modifiant la fréquence d'échantillonnage.
 
 * Quel est l'impact du changement de la fréquence d'échantillonnage ? 
-* Comparer la réponse mesurée à la théorie.
+* Comparer la réponse mesurée à la théorie. -->
 
 # Sources
 * [Digital Controller Tuning - Siemens](https://cache.industry.siemens.com/dl/files/379/51436379/att_93068/v1/AD353-119r2.pdf)
