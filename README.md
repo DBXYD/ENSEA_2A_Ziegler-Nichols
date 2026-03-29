@@ -1,5 +1,10 @@
 # TP : Asservissement de vitesse d’une machine à courant continu par PID numérique - Méthode de Ziegler-Nichols
 
+> 🛑 **Préparation**
+> 
+> - 👉 Lire les 7 premières parties et répondre aux questions associées repéré par les logos : 🧠 ou 💻
+> - 💻 Logiciels : installer STM32CubeIde v1.19 et un terminal uart digne de ce nom : Minicom, Teraterm ou putty.
+
 # 1. Objectifs pédagogiques
 
 Ce TP a pour objectif la mise en oeuvre d’un asservissement de vitesse d’une machine à courant continu (MCC) à l’aide d’un microcontrôleur STM32.
@@ -256,7 +261,7 @@ Description de la carte :
 > 
 > - Brancher également la sonde tachymétrique sur un voltmètre de table pour avoir une vue constante sur la vitesse de rotation de la machine.
 > - Régler les unités et les gains afin de lire directement toutes les valeurs sur l'oscilloscope
-> - Régler le trigger dans un premier temps sur la voie 3 numérique**
+> - Régler le trigger dans un premier temps sur la voie 3 numérique
 
 > 🛠️ **Partie pratique**
 > 
@@ -285,9 +290,15 @@ Les paramètres à respecter :
 
 ## Etape 2 : Faire tourner le moteur avec un rapport cyclique de 0.75, Vcc=Vmax/2=24V
 > 🛠️ **Partie pratique**
-> 
+> - Récupérer la dernier version de programme, flasher la carte et lancer le programme en mode debug.
+> - Dans STM32CubeIde, ouvrir la fenetre "live expression" et afficher les varables `h_control1` et `currentState`
+> - Déployer ces variables et définir les variables les plus intéressantes
 > - Configurer le hacheur avec les paramètres souhaitez.
 > - En boucle ouverte, mesurer le point de fonctionnement du moteur. 
+
+> 🛑 **Sens de rotation du moteur**
+> 
+> Certains moteurs sont câblés à l'envers, il se peut que la vitesse mesurée soit dans le sens inverse au sens de rotation du moteur, dans ce cas, éteindre la maquette, inverser les bornes + et - sur le moteur. Relancer la maquette et valider la mesure correcte du sens de rotation.
 
 Remarque : Nous allons faire des mesures à un point de fonctionnement spécifique afin de ne pas subir les frottements secs présents lors du démarrage et être loin de la vitesse maximale afin de préserver le moteur et le hacheur.
 
